@@ -1,0 +1,35 @@
+{
+    "compilerOptions": {
+        "outDir": "dist",
+        "target": "ES5",
+        // "module": "umd",
+        // "moduleResolution": "Classic",
+        // "allowUmdGlobalAccess": true,
+        // "isolatedModules": true,
+        "allowJs": true,
+        // "experimentalDecorators": true,
+        // "noImplicitThis": true,
+        // "noImplicitReturns": true,
+        "alwaysStrict": true,
+        // "inlineSourceMap": true,
+        // "inlineSources": false,
+        // "noFallthroughCasesInSwitch": true,
+        // "noUnusedLocals": true,
+        // "noUnusedParameters": true,
+        // "strict": true,
+        // "removeComments": true,
+        // "pretty": true,
+        // "strictPropertyInitialization": true,
+        "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
+        "lib": ["es2015", "dom"],
+        "rootDir": "src",
+        "typeRoots": [
+        ],
+        "paths": {
+        }
+    },
+    "include": [
+        "./src/**/*.ts"
+    ]
+}
