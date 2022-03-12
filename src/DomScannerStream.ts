@@ -50,7 +50,7 @@ export class DomScannerStream extends DomScanner
 
         else
         {
-            this.options.completed();
+            // this.options.completed();
             this.scanResolve();
         }
     }

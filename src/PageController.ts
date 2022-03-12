@@ -1,26 +1,13 @@
-import { MapObject, TypeData, TextFunction } from "./LiveDom";
 import { DomScanner } from "./DomScanner";
 import { DomScannerLoaded } from "./DomScannerLoaded";
-import { Page, PageOptions } from "./Page";
+import { PageOptions } from "./Page";
 import { Directive, DirectiveConfig } from "./Directive";
 import { DirectiveElementRender } from "./DirectiveElementRender";
 import { DirectiveElementEach } from "./DirectiveElementEach";
-import { DataManager } from "./DataManager";
+import { DataManager, TypeData } from "./DataManager";
 import { DirectiveElementIf } from "./DirectiveElementIf";
 import { Parser } from "./Parser";
 import { AttrInfo, ElementRenderInfo, NodeElementInfo, NodeInfo, NodeTextInfo } from "./NodeInfo";
-
-// 1. scan and observe
-// 2. build
-// 3. render
-
-
-// <!--\ld...--><!--/ld-->
-// <tag live-dom="id1234"></tag>
-// <tag _ld="id1234"></tag>
-// <!--_ld=id1234-->
-
-// .toRawHtml()
 
 // WeakMap<Document, Map<NodeInfo>>
 
@@ -35,14 +22,14 @@ export class PageController
 {
     public doc: Document;
     public options: PageOptions;
-    public page: Page;
-    // public container: Element;
     public dataManager: DataManager;
+    public scanCompletedPromise: Promise<void> = null;
     
     private scanner: DomScanner;
-    private elementDirectivesConfig: DirectiveConfig[];
+    private elementDirectivesConfig: DirectiveConfig<Element>[];
     // private directiveText: DirectiveText;
-    private nodeInfos: MapObject<NodeInfo>;
+    // private nodeInfos: MapObject<NodeInfo>;
+    private requestRenderPagePromise: Promise<void> = null;
     
     public constructor(doc: Document, options: PageOptions)
     {
@@ -55,45 +42,46 @@ export class PageController
             {attr: null, create: DirectiveElementRender.create, },
         ];
         // this.directiveText = new DirectiveText();
-        this.nodeInfos = {};
+        // this.nodeInfos = {};
         
         this.scanner = new DomScannerLoaded(document, {
             elementStart: this.scanElementStart.bind(this),
             elementEnd: this.scanElementEnd.bind(this),
             comment: this.scanComment.bind(this),
             text: this.scanText.bind(this),
-            completed: this.scanCompleted.bind(this),
         });
-        this.scanner.scan();
         
-        // this.container = options.container as Element;
-        // this.page = new Page(this.container);
-        this.initPage();
-        
-        // this.getNodeInfo(this.container).render(this.data);
+        this.scanCompletedPromise = this.scanner.scan().
+        then(() =>
+        {
+            if(this.options.loaded)
+                this.options.loaded();
+            
+            this.requestRenderPage();
+        });
     }
     
-    private initPage()
-    {
-        this.page = new Page();
-        this.page.updateData = this.updatePageData.bind(this);
-    }
-    private updatePageData(data: TypeData = {}) : Promise<void>
+    public updatePageData(data: TypeData = {}) : Promise<void>
     {
         // console.log("updatePageData:", data);
         this.dataManager.mergePageData(data);
-        this.renderElement(this.doc.documentElement);
-        return Promise.resolve();
+        return this.requestRenderPage();
     }
-    
-    public parse()
+    private requestRenderPage() : Promise<void>
     {
-        return this.scanner.scan();
+        if(this.requestRenderPagePromise)
+            return this.requestRenderPagePromise;
+        
+        return this.requestRenderPagePromise = this.scanCompletedPromise.
+        then(() =>
+        {
+            this.requestRenderPagePromise = null;
+            this.renderElement(this.doc.documentElement);
+        });
     }
     
     private scanElementStart(element: Element) : void
     {
-        // init element
         // console.log("elementStart:", element);
         this.setupElement(element);
     }
@@ -108,12 +96,7 @@ export class PageController
     private scanText(text: Text) : void
     {
         // console.log("text:", text);
-        
         this.setupText(text);
-    }
-    private scanCompleted() : void
-    {
-        this.renderElement(this.doc.documentElement);
     }
     
     private setupElement(element: Element)
@@ -124,11 +107,9 @@ export class PageController
             placeholderComment: null,
             attrs: {},
             directives: [],
-            directiveAttrs: {},
         };
         
         // console.log("DirectiveElement build node:", nodeInfo, node);
-        //TODO find directive attributes and remove, then for each attributes
         const attrs = element.attributes;
         for(let i=attrs.length-1; i>=0; --i)
         {
@@ -144,7 +125,7 @@ export class PageController
         
         this.setupElementDirectives(element, info);
         
-        if(Object.keys(info.attrs).length == 0 && Object.keys(info.directives).length == 0 && Object.keys(info.directiveAttrs).length == 0)
+        if(Object.keys(info.attrs).length == 0 && Object.keys(info.directives).length == 0)
         {
             this.setNodeInfo(element, null);
             return ;
@@ -175,7 +156,6 @@ export class PageController
     private renderElement(placeholder: Element)
     {
         const elementInfo = this.getNodeInfo(placeholder) as NodeElementInfo;
-        // const element = placeholder.nodeType==1 ? placeholder as Element : elementInfo.element;
         // console.log("renderElement:", placeholder, this.isLiveNode(placeholder), elementInfo);
         if(! elementInfo)
         {
@@ -198,13 +178,10 @@ export class PageController
         const renderInfo: ElementRenderInfo = {
             elementInfo,
             exists,
-            renders: [], //TODO no use
-            attrsVal: {}, //TODO no use
-            directivesVal: {},
+            // attrsVal: {}, //TODO no use
         };
         
         const element = placeholder.nodeType==1 ? placeholder as Element : elementInfo.element;
-        // const renderElements = this.processElementRender(element, renderInfo);
         const renderElements = this.processElementDirectiveRender(element, renderInfo, 0);
         // console.log("renderElement renderElements:", element, renderElements, renderInfo);
         if(renderElements.length == 0)

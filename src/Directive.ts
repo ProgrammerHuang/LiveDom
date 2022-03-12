@@ -1,10 +1,10 @@
 import { PageController } from "./PageController";
 import { ElementRenderInfo, NodeInfo } from "./NodeInfo";
 
-export interface DirectiveConfig
+export interface DirectiveConfig<N extends Node = Node>
 {
     attr?: string;
-    create: (controller: PageController, ele: Element, info: NodeInfo, config: DirectiveConfig)=>Directive|null;
+    create: (controller: PageController, node: N, info: NodeInfo, config: DirectiveConfig<N>)=>Directive<N>|null;
 }
 
 export interface DirectiveRender<N extends Node = Node>
@@ -16,11 +16,11 @@ export interface DirectiveRender<N extends Node = Node>
 // }
 
 
-export abstract class Directive
+export abstract class Directive<N extends Node = Node>
 {
     // public name: string = null;
     // public abstract buildNode(nodeInfo: NodeInfo, node: Node);
-    public abstract render(element: Element, renderInfo: ElementRenderInfo, continueRender: DirectiveRender): Element[];
+    public abstract render(element: N, renderInfo: ElementRenderInfo, continueRender: DirectiveRender<N>): N[];
     // public abstract unsetNode(nodeInfo: NodeInfo);
     protected controller: PageController;
     protected constructor(controller: PageController)

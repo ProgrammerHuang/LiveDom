@@ -1,5 +1,8 @@
+import { TypeData } from "./DataManager";
 import { Directive } from "./Directive";
-import { MapObject, RendererFunction, TypeData } from "./LiveDom";
+
+type MapObject<T=any> = {[k: string]: T};
+type RendererFunction<R=any> = (node: Node) => R;
 
 export interface NodeInfo<N extends Node = Node>
 {
@@ -15,8 +18,7 @@ export interface NodeElementInfo extends NodeInfo
     element: Element;
     placeholderComment: Comment;
     attrs: MapObject<AttrInfo>;
-    directives: Directive[];
-    directiveAttrs: MapObject<AttrInfo>;
+    directives: Directive<Element>[];
     // keyGetter?: (data: TypeData) => any;
 }
 export interface AttrInfo
@@ -27,9 +29,7 @@ export interface ElementRenderInfo
 {
     elementInfo: NodeElementInfo;
     exists: Node[];
-    renders: Element[];
-    attrsVal: MapObject<any>;
-    directivesVal: MapObject<any>;
+    // attrsVal: MapObject<any>;
 }
 
 export interface NodeTextInfo extends NodeInfo

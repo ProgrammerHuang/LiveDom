@@ -1,4 +1,5 @@
-import { TypeData } from "./LiveDom";
+
+export type TypeData = {[k: string]: any};
 
 export class DataManager
 {

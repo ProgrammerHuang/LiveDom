@@ -6,7 +6,6 @@ export interface DomScannerOptions
     elementEnd(element: Element): void;
     comment(comment: Comment): void;
     text(text: Text): void;
-    completed() : void;
 }
 
 export abstract class DomScanner

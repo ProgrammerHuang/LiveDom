@@ -14,7 +14,6 @@ export class DomScannerLoaded extends DomScanner
             if (this.doc.readyState == "complete")
             {
                 this.walkNode(this.doc.documentElement);
-                this.options.completed();
                 this.observer.observe(this.doc.documentElement, { subtree: true, childList: true, attributes: true, characterData: true });
                 resolve();
             }
@@ -24,7 +23,6 @@ export class DomScannerLoaded extends DomScanner
                 this.doc.addEventListener("DOMContentLoaded", () =>
                 {
                     this.walkNode(this.doc.documentElement);
-                    this.options.completed();
                     this.observer.observe(this.doc.documentElement, { subtree: true, childList: true, attributes: true, characterData: true });
                     resolve();
                 });

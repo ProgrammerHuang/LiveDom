@@ -1,5 +1,6 @@
-import { TextFunction, TypeData } from "./LiveDom";
+import { TypeData } from "./DataManager";
 
+export type TextFunction<R=any> = (data: TypeData) => R;
 
 interface ParseTextResult
 {
@@ -10,7 +11,6 @@ interface ParseTextResult
 
 export class Parser
 {
-    
     public static parseText(text: string) : ParseTextResult
     {
         const expressionRegex = /\$\{\s*([a-zA-z_]\w*(\.\w+)*)\s*\}/g;
