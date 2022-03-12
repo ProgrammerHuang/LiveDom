@@ -1,4 +1,5 @@
 var gulp = require('gulp');
+var plumber = require('gulp-plumber');
 var browserify = require('browserify');
 var source = require('vinyl-source-stream');
 var tsify = require('tsify');
@@ -9,8 +10,9 @@ var buffer = require('vinyl-buffer');
 
 function build()
 {
-  // Do something after a, b, and c are finished.
-  return browserify({
+    //TODO pump
+    //TODO typescript error report
+    return browserify({
         basedir: '.',
         debug: true,
         entries: ['src/main.ts'],
@@ -25,6 +27,13 @@ function build()
     //   extensions: ['.ts']
     // }).
     bundle().
+    on('error', function (error)
+    {
+        console.error(error.toString());
+        // this.end();
+        this.emit('end');
+    }).
+    pipe(plumber()).
     pipe(source('livedom.js')).
     pipe(buffer()).
     pipe(sourcemaps.init({
@@ -37,7 +46,7 @@ function build()
 
 function watch()
 {
-    gulp.watch('src/**/*.ts', { delay: 1000 }, build);
+    gulp.watch('src/**/*.ts', { ignoreInitial: false, delay: 1000 }, build);
 }
 
 exports.build = build;
