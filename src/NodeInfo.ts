@@ -23,6 +23,8 @@ export interface NodeElementInfo extends NodeInfo
 }
 export interface AttrInfo
 {
+    // srcVal: string;
+    // prevVal: any;
     exec(data: TypeData);
 }
 export interface ElementRenderInfo

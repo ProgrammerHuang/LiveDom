@@ -1,5 +1,5 @@
 import { PageController } from "./PageController";
-import { ElementRenderInfo, NodeInfo } from "./NodeInfo";
+import { ElementRenderInfo, NodeElementInfo, NodeInfo } from "./NodeInfo";
 
 export interface DirectiveConfig<N extends Node = Node>
 {
@@ -18,6 +18,22 @@ export interface DirectiveRender<N extends Node = Node>
 
 export abstract class Directive<N extends Node = Node>
 {
+    public static hasDirective(_info: NodeInfo) : boolean
+    {
+        const info = _info as NodeElementInfo;
+        
+        if(!info.directives || !Array.isArray(info.directives))
+            return false;
+        
+        for(const d of info.directives)
+        {
+            if(d instanceof this)
+                return true;
+        }
+        
+        return false;
+    }
+    
     // public name: string = null;
     // public abstract buildNode(nodeInfo: NodeInfo, node: Node);
     public abstract render(element: N, renderInfo: ElementRenderInfo, continueRender: DirectiveRender<N>): N[];

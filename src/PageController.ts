@@ -8,6 +8,7 @@ import { DataManager, TypeData } from "./DataManager";
 import { DirectiveElementIf } from "./DirectiveElementIf";
 import { Parser } from "./Parser";
 import { AttrInfo, ElementRenderInfo, NodeElementInfo, NodeInfo, NodeTextInfo } from "./NodeInfo";
+import { DirectiveElementElse } from "./DirectiveElementElse";
 
 // WeakMap<Document, Map<NodeInfo>>
 
@@ -39,6 +40,8 @@ export class PageController
         this.elementDirectivesConfig = [
             {attr: attrLiveEach, create: DirectiveElementEach.create, },
             {attr: attrLiveIf, create: DirectiveElementIf.create, },
+            {attr: attrLiveElse, create: DirectiveElementElse.create, },
+            // {attr: null, create: DirectiveHtmlInputRender.create, },
             {attr: null, create: DirectiveElementRender.create, },
         ];
         // this.directiveText = new DirectiveText();
@@ -227,6 +230,14 @@ export class PageController
         
         return [element];
     }
+    public isPlaceholder(node: Node) : boolean
+    {
+        if(node.nodeType != 8) //8: Node.COMMENT_NODE
+            return false;
+        
+        const info = this.getNodeInfo(node) as NodeElementInfo;
+        return info.placeholderComment == node;
+    }
     private getPlaceholderComment(info: NodeElementInfo) : Comment
     {
         if(info.placeholderComment)
@@ -306,7 +317,7 @@ export class PageController
         //prop map ?
         node[propLiveInfo] = info;
     }
-    private getNodeInfo(node: Node) : NodeInfo
+    public getNodeInfo(node: Node) : NodeInfo
     {
         return node[propLiveInfo] || null;
     }
