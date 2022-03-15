@@ -22,10 +22,10 @@ export class DataManager
         this.mergePageData(initData);
     }
     
-    public mergePageData(pageData: TypeData)
+    public mergePageData(newData: TypeData)
     {
-        Object.assign(this.lastMergeData, pageData);
-        Object.assign(this.pageData, pageData);
+        Object.assign(this.lastMergeData, newData);
+        Object.assign(this.pageData, newData);
     }
     public commitMergeData() //like transaction commit
     {
