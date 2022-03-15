@@ -1,4 +1,4 @@
-import { TypeData } from "./DataManager";
+import { DataPaths, TypeData } from "./DataManager";
 import { Directive } from "./Directive";
 
 type MapObject<T=any> = {[k: string]: T};
@@ -25,6 +25,7 @@ export interface AttrInfo
 {
     // srcVal: string;
     // prevVal: any;
+    paths: DataPaths;
     exec(data: TypeData);
 }
 export interface ElementRenderInfo

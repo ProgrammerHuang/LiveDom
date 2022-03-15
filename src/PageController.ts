@@ -1,16 +1,15 @@
 import { DomScanner } from "./DomScanner";
 import { DomScannerLoaded } from "./DomScannerLoaded";
+import { Parser } from "./Parser";
 import { PageOptions } from "./Page";
+import { DataManager, TypeData } from "./DataManager";
+import { AttrInfo, ElementRenderInfo, NodeElementInfo, NodeInfo, NodeTextInfo } from "./NodeInfo";
 import { Directive, DirectiveConfig } from "./Directive";
 import { DirectiveElementRender } from "./DirectiveElementRender";
 import { DirectiveElementEach } from "./DirectiveElementEach";
-import { DataManager, TypeData } from "./DataManager";
 import { DirectiveElementIf } from "./DirectiveElementIf";
-import { Parser } from "./Parser";
-import { AttrInfo, ElementRenderInfo, NodeElementInfo, NodeInfo, NodeTextInfo } from "./NodeInfo";
 import { DirectiveElementElse } from "./DirectiveElementElse";
-
-// WeakMap<Document, Map<NodeInfo>>
+import { DirectiveHtmlInputRender } from "./DirectiveHtmlInputRender";
 
 const propLiveInfo = Symbol("LiveDomInfoProp");
 const attrLiveName = "_ld";
@@ -36,12 +35,12 @@ export class PageController
     {
         this.doc = doc;
         this.options = options;
-        this.dataManager = new DataManager(options.data || {});
+        this.dataManager = new DataManager(this.options.data || {});
         this.elementDirectivesConfig = [
             {attr: attrLiveEach, create: DirectiveElementEach.create, },
             {attr: attrLiveIf, create: DirectiveElementIf.create, },
             {attr: attrLiveElse, create: DirectiveElementElse.create, },
-            // {attr: null, create: DirectiveHtmlInputRender.create, },
+            {attr: null, create: DirectiveHtmlInputRender.create, },
             {attr: null, create: DirectiveElementRender.create, },
         ];
         // this.directiveText = new DirectiveText();
@@ -57,8 +56,8 @@ export class PageController
         this.scanCompletedPromise = this.scanner.scan().
         then(() =>
         {
-            if(this.options.loaded)
-                this.options.loaded();
+            if(this.options.onPageSetupCompleted)
+                this.options.onPageSetupCompleted();
             
             this.requestRenderPage();
         });
@@ -80,6 +79,7 @@ export class PageController
         {
             this.requestRenderPagePromise = null;
             this.renderElement(this.doc.documentElement);
+            this.dataManager.commitMergeData();
         });
     }
     
@@ -148,11 +148,14 @@ export class PageController
     }
     private setupAttribute(attr: Attr) : AttrInfo
     {
-        const parseResult = Parser.parseText(attr.value);
+        const srcVal = attr.value;
+        const parseResult = Parser.parseText(srcVal);
         if(!Parser.hasTextExpress(parseResult))
             return null;
         
         return {
+            // srcVal,
+            paths: parseResult.paths,
             exec: parseResult.exec,
         };
     }
@@ -284,11 +287,12 @@ export class PageController
         const info: NodeTextInfo = {
             id: 'LDT'+(nextId++),
         };
+        const textExec = parseResult.exec;
         
         // console.log("buildNode:", info, text);
         info.render = (node: Text) =>
         {
-            node.data = parseResult.exec(this.dataManager.data);
+            node.data = textExec(this.dataManager.data);
         }
         this.setNodeInfo(text, info);
         // info.render(text);

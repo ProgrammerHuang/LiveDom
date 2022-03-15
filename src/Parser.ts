@@ -1,4 +1,6 @@
-import { TypeData } from "./DataManager";
+import { DataPaths, TypeData } from "./DataManager";
+
+//TODO isUseMergeData() field1!==undefined || field1.field2!==undefined || ...
 
 export type TextFunction<R=any> = (data: TypeData) => R;
 
@@ -6,6 +8,7 @@ interface ParseTextResult
 {
     // vars: string[];
     parts: (string|TextFunction)[];
+    paths: DataPaths;
     exec(data: TypeData);
 }
 
@@ -16,6 +19,7 @@ export class Parser
         const expressionRegex = /\$\{\s*([a-zA-z_]\w*(\.\w+)*)\s*\}/g;
         // console.log("parseText:", text.length, text.match(expressionRegex));
         const parts: (string|TextFunction)[] = [];
+        const paths: DataPaths = {};
         let match: RegExpExecArray = null;
         let lastIndex = 0;
         
@@ -26,6 +30,7 @@ export class Parser
             
             // console.log("parseText result:", result, expressionRegex.lastIndex);
             const names = match[1].split(/\./g);
+            paths[match[1]] = names;
             parts.push(buildTextFunction(names));
             
             lastIndex = expressionRegex.lastIndex;
@@ -35,7 +40,11 @@ export class Parser
             parts.push(text.substring(lastIndex, text.length));
         // console.log("parseText lastIndex:", expressionRegex.lastIndex, parts);
         
-        return {parts, exec: buildParseResultRenderer(parts)};
+        return {
+            parts,
+            paths,
+            exec: buildParseResultRenderer(parts),
+        }; 
     }
 
     public static hasTextExpress(result: ParseTextResult)

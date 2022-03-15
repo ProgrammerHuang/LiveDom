@@ -8,7 +8,7 @@ export interface PageOptions
     // container?: Element|string;
     data?: TypeData; //init data
     // directives?: MapObject<DirectiveOptions>;
-    loaded?: ()=>void;
+    onPageSetupCompleted?: ()=>void;
     // debug?: boolean;
 }
 
