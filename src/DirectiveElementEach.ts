@@ -16,21 +16,33 @@ export class DirectiveElementEach extends Directive
         element.removeAttribute(config.attr);
         delete info.attrs[config.attr];
         
-        return new DirectiveElementEach(controller, element, attrInfo);
+        const directive = new DirectiveElementEach(controller, element, attrInfo);
+        
+        if(element.hasAttribute("live:item"))
+        {
+            directive.itemName = element.getAttribute("live:item");
+            element.removeAttribute("live:item");
+        }
+        
+        if(element.hasAttribute("live:index"))
+        {
+            directive.indexName = element.getAttribute("live:index");
+            element.removeAttribute("live:index");
+        }
+        
+        return directive;
     }
     
     // private element: Element;
     private attrInfo: AttrInfo;
-    private itemName: string;
-    private indexName: string;
+    private itemName: string = "item";
+    private indexName: string = "index";
     
     protected constructor(controller: PageController, element: Element, attrInfo: AttrInfo)
     {
         super(controller);
         // this.element = element;
         this.attrInfo = attrInfo;
-        this.itemName = element.getAttribute("live:item") || "item";
-        this.indexName = element.getAttribute("live:index") || "index";
     }
     
     public render(element: Element, info: ElementRenderInfo, continueRender: DirectiveRender<Element>)
