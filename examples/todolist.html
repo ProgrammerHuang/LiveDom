@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Example: Todo list - LiveDom</title>
+    <style type="text/css">
+    .todo-list {
+        
+    }
+    .todo {
+        display: flex;
+        
+    }
+    </style>
+    <script src="../dist/livedom.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    
+    let todoList = JSON.parse(localStorage.getItem("LiveDom-examples-todoList-data")||"[]");
+    console.log("todoList load:", todoList);
+    // todoList = [{}, {}, {}];
+    
+    const initData = {
+        form: {content: "", button: "Add", cancel: false},
+        todoList: todoList,
+    };
+    
+    const page = LiveDom.initPage({data: initData, onPageSetupCompleted: onPageSetupCompleted});
+    
+    function onPageSetupCompleted()
+    {
+        document.getElementById("ButtonSubmit").addEventListener("click", submit);
+        document.getElementById("ButtonCancel").addEventListener("click", cancel);
+    }
+    
+    function submit()
+    {
+        const content = document.getElementById("InputTodoContent").value;
+        console.log("submit:", content);
+        
+        todoList.push({
+            id: Date.now(),
+            created: (new Date()).toLocaleString(),
+            updated: (new Date()).toLocaleString(),
+            content: content,
+        });
+        
+        saveTodoList();
+        updateTodoList();
+        resetForm();
+    }
+    
+    function cancel()
+    {
+        
+    }
+    
+    function updateTodoList()
+    {
+        page.updateData({todoList: todoList});
+    }
+    function saveTodoList()
+    {
+        localStorage.setItem("LiveDom-examples-todoList-data", JSON.stringify(todoList));
+    }
+    function removeTodo(id)
+    {
+        console.log("remove todo:", id);
+        todoList = todoList.filter(function(todo) { return todo.id != id; });
+        saveTodoList();
+        updateTodoList();
+    }
+    
+    function resetForm()
+    {
+        page.updateData({form: {content: "", button: "Add", cancel: false}});
+    }
+    
+    </script>
+</head>
+<body>
+    
+    <h1>Todo List</h1>
+    <hr />
+    <form>
+        <input type="text" id="InputTodoContent" value="${form.content}">
+        <input type="button" id="ButtonSubmit" value="${form.button}">
+        <input type="button" id="ButtonCancel" value="Cancel" live:if="${form.cancel}">
+    </form>
+    <hr />
+    <div class="todo-list">
+        <div class="todo" live:each="${todoList}" live:item="todo">
+            <input type="checkbox" value="${todo.id}">
+            <div>${todo.content}</div>
+            <!-- <div>${todo.created}</div> -->
+            <!-- <div>${todo.updated}</div> -->
+            <a href="javascript:void(0);" onclick="modifyTodo(${todo.id})">修改</a>
+            <a href="javascript:void(0);" onclick="removeTodo(${todo.id})">删除</a>
+        </div>
+        <div live:else>Todo list is empty!</div>
+    </div>
+</body>
+</html>
