@@ -10,13 +10,21 @@
     }
     .todo {
         display: flex;
-        
+        width: 400px;
+    }
+    .todo-content {
+        flex: auto;
+    }
+    .todo-action {
+        flex: 0;
+        margin: 0 4px;
     }
     </style>
     <script src="../dist/livedom.js" type="text/javascript"></script>
     <script type="text/javascript">
     
     let todoList = JSON.parse(localStorage.getItem("LiveDom-examples-todoList-data")||"[]");
+    let currentTodo = null;
     console.log("todoList load:", todoList);
     // todoList = [{}, {}, {}];
     
@@ -37,8 +45,36 @@
     {
         const content = document.getElementById("InputTodoContent").value;
         console.log("submit:", content);
+        if(!content)
+        {
+            alert("Required todo content");
+            return ;
+        }
         
-        todoList.push({
+        if(currentTodo)
+            updateCurrentTodo(content);
+        else
+            addTodo(content);
+        
+        currentTodo = null;
+        resetForm();
+    }
+    
+    function cancel()
+    {
+        if(currentTodo)
+            currentTodo = null;
+        
+        resetForm();
+    }
+    
+    function updateTodoList()
+    {
+        page.updateData({todoList: todoList});
+    }
+    function addTodo(content)
+    {
+        todoList.unshift({
             id: Date.now(),
             created: (new Date()).toLocaleString(),
             updated: (new Date()).toLocaleString(),
@@ -47,21 +83,31 @@
         
         saveTodoList();
         updateTodoList();
-        resetForm();
     }
-    
-    function cancel()
+    function updateCurrentTodo(content)
     {
-        
-    }
-    
-    function updateTodoList()
-    {
-        page.updateData({todoList: todoList});
+        currentTodo.content = content;
+        currentTodo.updated = (new Date()).toLocaleString();
+        saveTodoList();
+        updateTodoList();
     }
     function saveTodoList()
     {
         localStorage.setItem("LiveDom-examples-todoList-data", JSON.stringify(todoList));
+    }
+    function modifyTodo(id)
+    {
+        const todo = todoList.find(function(t) { return t.id==id; });
+        console.log("modify todo:", todo);
+        
+        if(!todo)
+        {
+            alert("Not found todo id=" + id);
+            return ;
+        }
+        
+        currentTodo = todo;
+        page.updateData({form: {content: todo.content, button: "Modify", cancel: true}});
     }
     function removeTodo(id)
     {
@@ -91,11 +137,11 @@
     <div class="todo-list">
         <div class="todo" live:each="${todoList}" live:item="todo">
             <input type="checkbox" value="${todo.id}">
-            <div>${todo.content}</div>
+            <div class="todo-content">${todo.content}</div>
             <!-- <div>${todo.created}</div> -->
             <!-- <div>${todo.updated}</div> -->
-            <a href="javascript:void(0);" onclick="modifyTodo(${todo.id})">修改</a>
-            <a href="javascript:void(0);" onclick="removeTodo(${todo.id})">删除</a>
+            <a class="todo-action" href="javascript:void(0);" onclick="modifyTodo(${todo.id})">Modify</a>
+            <a class="todo-action" href="javascript:void(0);" onclick="removeTodo(${todo.id})">Remove</a>
         </div>
         <div live:else>Todo list is empty!</div>
     </div>
