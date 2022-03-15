@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>LiveDom test1</title>
+    <style type="text/css">
+    body.light h1.title {
+        color: goldenrod;
+    }
+    </style>
+    <script src="../dist/livedom.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    
+    const initData = {
+        name: "Timer",
+        themeClass: "light",
+    };
+    
+    const lines = (new Array(5)).fill(1).map((d, i) => ({n: i+1}));
+    
+    const page = LiveDom.initPage();
+    page.updateData(initData);
+    updateDate();
+    
+    setInterval(updateDate, 1000);
+    
+    function updateDate()
+    {
+        const d = new Date();
+        page.updateData({time: d, isShow: d.getSeconds()%5, lines: lines.slice(0, d.getSeconds()%6)});
+    }
+    </script>
+</head>
+<body class="page-container live-loading ${themeClass}">
+
+<h1 class="title">Hello ${name} <!-- title end --><script type="text/javascript">console.log("-------------------------", new Date());</script></h1>
+<hr />
+<div>${time}</div>
+<div live:if="${isShow}">${time} <input type="text"></div>
+<div live:else>isShow=${isShow}</div>
+<hr />
+<div live:each="${lines}">[ ${index} ] item${item.n}</div>
+<!-- else below -->
+<div live:else>Each nothing</div>
+<input type="text" />
+<div>^^^^^^^^^^^^</div>
+<!-- comment hi -->
+
+</body>
+</html>
+
+

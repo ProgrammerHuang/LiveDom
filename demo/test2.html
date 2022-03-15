@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>LiveDom test1</title>
+    <style type="text/css">
+    body.light h1.title {
+        color: goldenrod;
+    }
+    .comment-reply {
+        margin-left: 24px;
+    }
+    </style>
+    <script src="../dist/livedom.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    
+    const initData = {
+        name: "World",
+        content: "Hi, very good!",
+        article: {author: "Me"},
+        likes: 123,
+        livesColor: "red",
+        themeClass: "light",
+        comments: [
+            {content: "Comment 1"},
+            {content: "Comment 2", replies: [{content: "Reply Content 2.1"}, {content: "Reply Content 2.2"}]},
+            {content: "Comment 3"},
+        ],
+    };
+    
+    const startTime = Date.now();
+    
+    const page = LiveDom.initPage({data: initData, onPageSetupCompleted: function()
+    {
+        console.log(">>>>>>>>>>>>>>>>>>>>>>: ", Date.now() - startTime);
+        // const data = {name: "World", content: "Hi, very good!", article: {author: "Me"}};
+        // page.updateData(data);
+    }});
+    </script>
+</head>
+<body class="page-container live-loading ${themeClass}">
+
+<h1 class="title">Hello ${name} <!-- title end --><script type="text/javascript">console.log("-------------------------", new Date());</script></h1>
+<p class="content">${ content } Author: ${ article.author }, ${article.date}. <span style="color: ${livesColor}">${likes}</span> ${what.nothing}:)</p>
+<hr />
+<div class="comments-list">
+    <div class="comment" live:each="${comments}">
+        name: ${name}, ${index}, ${item.content}
+        <div class="comment-reply" live:each="${item.replies}">
+            ${item.content}
+        </div>
+    </div>
+</div>
+
+<!-- comment hi -->
+
+</body>
+</html>
+
+

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>LiveDom test1</title>
+    <style type="text/css">
+    body.light h1.title {
+        color: goldenrod;
+    }
+    </style>
+    <script src="../dist/livedom.js" type="text/javascript"></script>
+    <script type="text/javascript">
+    
+    const initData = {
+        name: "World",
+        content: "Hi, very good!",
+        article: {author: "Me"},
+        likes: 123,
+        themeClass: "light",
+    };
+    
+    LiveDom.initPage({data: initData});
+    // const data = {name: "World", content: "Hi, very good!", article: {author: "Me"}};
+    // page.updateData(data);
+    </script>
+</head>
+<body class="page-container live-loading ${themeClass}">
+
+<h1 class="title">Hello ${name}</h1>
+<p class="content">${ content } Author: ${ article.author }, ${article.date}. Likes ${likes} ${what.nothing}:)</p>
+<hr />
+<div class="comments-list">
+    <div class="comment" live:for="${comments}">
+    </div>
+</div>
+
+</body>
+</html>
+
+
