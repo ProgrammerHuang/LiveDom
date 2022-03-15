@@ -75,6 +75,7 @@ export class PageController
             return this.requestRenderPagePromise;
         
         return this.requestRenderPagePromise = this.scanCompletedPromise.
+        then(() => wait(5)).
         then(() =>
         {
             this.requestRenderPagePromise = null;
@@ -239,7 +240,7 @@ export class PageController
             return false;
         
         const info = this.getNodeInfo(node) as NodeElementInfo;
-        return info.placeholderComment == node;
+        return !!info && info.placeholderComment == node;
     }
     private getPlaceholderComment(info: NodeElementInfo) : Comment
     {
@@ -353,3 +354,10 @@ function insertAfter(before: Node, node: Node)
         before.parentNode.appendChild(node);
 }
 
+function wait(ms: number) : Promise<void>
+{
+    return new Promise(function(resolve)
+    {
+        setTimeout(resolve, ms);
+    });
+}
