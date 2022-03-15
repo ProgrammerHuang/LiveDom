@@ -10,25 +10,29 @@ export class DirectiveElementEach extends Directive
     {
         if (!info.attrs[config.attr])
             return null;
-
+        
         const attrInfo = info.attrs[config.attr];
-
+        
         element.removeAttribute(config.attr);
         delete info.attrs[config.attr];
-
+        
         return new DirectiveElementEach(controller, element, attrInfo);
     }
-
+    
     // private element: Element;
     private attrInfo: AttrInfo;
-
+    private itemName: string;
+    private indexName: string;
+    
     protected constructor(controller: PageController, element: Element, attrInfo: AttrInfo)
     {
         super(controller);
         // this.element = element;
         this.attrInfo = attrInfo;
+        this.itemName = element.getAttribute("live:item") || "item";
+        this.indexName = element.getAttribute("live:index") || "index";
     }
-
+    
     public render(element: Element, info: ElementRenderInfo, continueRender: DirectiveRender<Element>)
     {
         // console.log("DirectiveElementEach renderNode:", element, info);
@@ -54,7 +58,7 @@ export class DirectiveElementEach extends Directive
                                 this.controller.cloneNode(elementInfo.element);
             itemElement[propLiveKeyData] = keyVal;
             
-            const scopeData = { item, index: i };
+            const scopeData = { [this.itemName]: item, [this.indexName]: i };
             this.controller.dataManager.pushScopeData(scopeData);
             const itemRenderElements = continueRender(itemElement, info);
             this.controller.dataManager.popScopeData(scopeData);
