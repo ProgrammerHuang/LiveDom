@@ -4,17 +4,17 @@ import { PageController } from "./PageController";
 
 export class DirectiveElementIf extends Directive
 {
-    public static create(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig): DirectiveElementIf
+    public static setup(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig)
     {
         if (!info.attrs[config.attr])
-            return null;
+            return ;
         
         const attrInfo = info.attrs[config.attr];
+        const directive = new DirectiveElementIf(controller, element, attrInfo);
         
         element.removeAttribute(config.attr);
-        delete info.attrs[config.attr];
-        
-        return new DirectiveElementIf(controller, element, attrInfo);
+        info.attrs[config.attr].directive = directive;
+        info.directives.push(directive);
     }
     
     // private element: Element;

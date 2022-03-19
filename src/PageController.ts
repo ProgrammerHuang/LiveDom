@@ -37,11 +37,11 @@ export class PageController
         this.options = options;
         this.dataManager = new DataManager(this.options.data || {});
         this.elementDirectivesConfig = [
-            {attr: attrLiveEach, create: DirectiveElementEach.create, },
-            {attr: attrLiveIf, create: DirectiveElementIf.create, },
-            {attr: attrLiveElse, create: DirectiveElementElse.create, },
-            {attr: null, create: DirectiveHtmlInputRender.create, },
-            {attr: null, create: DirectiveElementRender.create, },
+            {attr: attrLiveEach, setup: DirectiveElementEach.setup, },
+            {attr: attrLiveIf, setup: DirectiveElementIf.setup, },
+            {attr: attrLiveElse, setup: DirectiveElementElse.setup, },
+            {attr: null, setup: DirectiveHtmlInputRender.setup, },
+            {attr: null, setup: DirectiveElementRender.setup, },
         ];
         // this.directiveText = new DirectiveText();
         // this.nodeInfos = {};
@@ -51,6 +51,7 @@ export class PageController
             elementEnd: this.scanElementEnd.bind(this),
             comment: this.scanComment.bind(this),
             text: this.scanText.bind(this),
+            textChanged: this.onTextChanged.bind(this),
         });
         
         this.scanCompletedPromise = this.scanner.scan().
@@ -103,9 +104,19 @@ export class PageController
         this.setupText(text);
     }
     
+    private onTextChanged(text: Text) : void
+    {
+        // console.log("onTextChanged:", this.getNodeInfo(text), text);
+        const info = this.getNodeInfo(text);
+        if(info)
+            return ;
+        
+        this.setupText(text);
+    }
+    
     private setupElement(element: Element)
     {
-        const info: NodeElementInfo = {
+        const info: NodeElementInfo = this.getNodeInfo(element) as NodeElementInfo || {
             id: 'LDE'+(nextId++),
             element,
             placeholderComment: null,
@@ -114,19 +125,7 @@ export class PageController
         };
         
         // console.log("DirectiveElement build node:", nodeInfo, node);
-        const attrs = element.attributes;
-        for(let i=attrs.length-1; i>=0; --i)
-        {
-            const attr = attrs[i];
-            const attrInfo = this.setupAttribute(attr);
-            // console.log("initElement attribute:", attr, attrInfo);
-            if(attrInfo)
-            {
-                info.attrs[attr.name] = attrInfo;
-                // attr.value = attrInfo.exec(this.data);
-            }
-        }
-        
+        this.setElementAttributes(element, info);
         this.setupElementDirectives(element, info);
         
         if(Object.keys(info.attrs).length == 0 && Object.keys(info.directives).length == 0)
@@ -138,13 +137,21 @@ export class PageController
         info.render = this.renderElement.bind(this);
         this.setNodeInfo(element, info);
     }
-    private setupElementDirectives(element: Element, info: NodeElementInfo)
+    private setElementAttributes(element: Element, info: NodeElementInfo)
     {
-        for(const config of this.elementDirectivesConfig)
+        const attrs = element.attributes;
+        for(let i=attrs.length-1; i>=0; --i)
         {
-            const directive = config.create(this, element, info, config);
-            if(directive)
-                info.directives.push(directive);
+            const attr = attrs[i];
+            if(info.attrs[attr.name] && info.attrs[attr.name].srcVal == attr.value)
+                continue;
+            
+            const attrInfo = this.setupAttribute(attr);
+            // console.log("initElement attribute:", attr, attrInfo);
+            if(attrInfo)
+                info.attrs[attr.name] = attrInfo;
+            else
+                delete info.attrs[attr.name];
         }
     }
     private setupAttribute(attr: Attr) : AttrInfo
@@ -155,10 +162,18 @@ export class PageController
             return null;
         
         return {
-            // srcVal,
+            srcVal,
             paths: parseResult.paths,
             exec: parseResult.exec,
+            directive: null,
         };
+    }
+    private setupElementDirectives(element: Element, info: NodeElementInfo)
+    {
+        for(const config of this.elementDirectivesConfig)
+        {
+            config.setup(this, element, info, config);
+        }
     }
     private renderElement(placeholder: Element)
     {

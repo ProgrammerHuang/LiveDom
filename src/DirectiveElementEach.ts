@@ -6,17 +6,16 @@ const propLiveKeyData = Symbol("LiveDomKeyDataProp");
 
 export class DirectiveElementEach extends Directive
 {
-    public static create(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig): DirectiveElementEach
+    public static setup(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig)
     {
         if (!info.attrs[config.attr])
-            return null;
+            return ;
         
         const attrInfo = info.attrs[config.attr];
+        const directive = new DirectiveElementEach(controller, element, attrInfo);
         
         element.removeAttribute(config.attr);
-        delete info.attrs[config.attr];
-        
-        const directive = new DirectiveElementEach(controller, element, attrInfo);
+        info.attrs[config.attr].directive = directive;
         
         if(element.hasAttribute("live:item"))
         {
@@ -30,7 +29,7 @@ export class DirectiveElementEach extends Directive
             element.removeAttribute("live:index");
         }
         
-        return directive;
+        info.directives.push(directive);
     }
     
     // private element: Element;

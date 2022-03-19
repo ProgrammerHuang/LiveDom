@@ -6,7 +6,7 @@ type AttrsInfoMap = {[name: string]: AttrInfo};
 
 export class DirectiveHtmlInputRender extends Directive
 {
-    public static create(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig): DirectiveHtmlInputRender
+    public static setup(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig)
     {
         if(element.tagName.toLocaleLowerCase() != "input")
             return null;
@@ -28,8 +28,9 @@ export class DirectiveHtmlInputRender extends Directive
         }
         
         if(Object.keys(attrs).length > 0)
-            return new DirectiveHtmlInputRender(controller, element, attrs);
-        return null;
+        {
+            info.directives.push(new DirectiveHtmlInputRender(controller, element, attrs));
+        }
     }
     
     // private element: Element;

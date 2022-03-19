@@ -4,7 +4,7 @@ import { ElementRenderInfo, NodeElementInfo, NodeInfo } from "./NodeInfo";
 export interface DirectiveConfig<N extends Node = Node>
 {
     attr?: string;
-    create: (controller: PageController, node: N, info: NodeInfo, config: DirectiveConfig<N>)=>Directive<N>|null;
+    setup: (controller: PageController, node: N, info: NodeInfo, config: DirectiveConfig<N>)=>void;
 }
 
 export interface DirectiveRender<N extends Node = Node>

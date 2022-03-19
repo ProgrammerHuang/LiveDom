@@ -4,14 +4,14 @@ import { PageController } from "./PageController";
 
 export class DirectiveTextRender extends Directive
 {
-    public static create(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig): DirectiveTextRender
+    public static setup(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig)
     {
-        if (!element.hasAttribute(config.attr))
-            return null;
-
-        element.removeAttribute(config.attr);
-
-        return new DirectiveTextRender(controller, element);
+        // if (!element.hasAttribute(config.attr))
+        //     return null;
+        
+        // element.removeAttribute(config.attr);
+        
+        // info.directives.push(new DirectiveTextRender(controller, element));
     }
 
     // private element: Element;

@@ -23,16 +23,18 @@ export interface NodeElementInfo extends NodeInfo
 }
 export interface AttrInfo
 {
-    // srcVal: string;
+    srcVal: string;
     // prevVal: any;
     paths: DataPaths;
     exec(data: TypeData);
+    directive: Directive;
 }
 export interface ElementRenderInfo
 {
     elementInfo: NodeElementInfo;
     exists: Node[];
     // attrsVal: MapObject<any>;
+    // disableRenderChildNodes: boolean;
 }
 
 export interface NodeTextInfo extends NodeInfo

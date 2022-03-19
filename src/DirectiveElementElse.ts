@@ -6,14 +6,18 @@ import { PageController } from "./PageController";
 
 export class DirectiveElementElse extends Directive
 {
-    public static create(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig): DirectiveElementElse
+    public static setup(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig)
     {
         if (!element.hasAttribute(config.attr))
-            return null;
+            return ;
         
+        const directive = new DirectiveElementElse(controller, element);
         element.removeAttribute(config.attr);
         
-        return new DirectiveElementElse(controller, element);
+        if(info.attrs[config.attr])
+            info.attrs[config.attr].directive = directive;
+        
+        info.directives.push(directive);
     }
     
     // private element: Element;

@@ -4,9 +4,10 @@ import { PageController } from "./PageController";
 
 export class DirectiveElementRender extends Directive
 {
-    public static create(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig): DirectiveElementRender
+    public static setup(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig)
     {
-        return new DirectiveElementRender(controller);
+        const directive = new DirectiveElementRender(controller);
+        info.directives.push(directive);
     }
 
     public render(element: Element, info: ElementRenderInfo, continueRender: DirectiveRender<Element>)
@@ -19,13 +20,16 @@ export class DirectiveElementRender extends Directive
             // if has custom element and xxxxx()
             // else if attrVal != attr.value
             const attrInfo = elementInfo.attrs[attrName];
+            if(attrInfo.directive)
+                continue ;
+            
             const attrVal = attrInfo.exec(this.controller.dataManager.data);
             // renderInfo.attrsVal[attrName] = attrVal;
             element.setAttribute(attrName, attrVal);
         }
-
+        
         this.controller.renderChildNodes(element);
-
+        
         return continueRender(element, info);
     }
 }
