@@ -33,6 +33,7 @@ export class DirectiveElementElse extends Directive
         let prevNode: Node = info.exists[0];
         while(prevNode = prevNode.previousSibling)
         {
+            // console.log("DirectiveElementElse find prev:", this.controller.isPlaceholder(prevNode), prevNode);
             if(this.controller.isPlaceholder(prevNode))
             {
                 const prevNodeInfo = this.controller.getNodeInfo(prevNode);

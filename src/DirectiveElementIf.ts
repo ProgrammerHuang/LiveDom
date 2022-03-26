@@ -30,7 +30,7 @@ export class DirectiveElementIf extends Directive
     public render(element: Element, info: ElementRenderInfo, continueRender: DirectiveRender<Element>)
     {
         // console.log("DirectiveElementEach renderNode:", element, info);
-        const elementInfo = info.elementInfo;
+        // const elementInfo = info.nodeInfo;
         // const directiveAttrInfo = elementInfo.directiveAttrs[attrLiveEach];
         const val = this.attrInfo.exec(this.controller.dataManager.data);
         // console.log("DirectiveElementEach items:", items);

@@ -8,28 +8,27 @@ export class DomScannerLoaded extends DomScanner
     {
         if (this.scanPromise)
             return this.scanPromise;
-
+        
         return this.scanPromise = new Promise<void>((resolve, reject) =>
         {
             if (this.doc.readyState == "complete")
             {
                 this.walkNode(this.doc.documentElement);
-                this.observer.observe(this.doc.documentElement, { subtree: true, childList: true, attributes: true, characterData: true });
+                this.startObserve();
                 resolve();
             }
-
             else
             {
                 this.doc.addEventListener("DOMContentLoaded", () =>
                 {
                     this.walkNode(this.doc.documentElement);
-                    this.observer.observe(this.doc.documentElement, { subtree: true, childList: true, attributes: true, characterData: true });
+                    this.startObserve();
                     resolve();
                 });
             }
         });
     }
-
+    
     protected walkNode(node: Node)
     {
         // console.log("walk node:", node, this.isCompletedNode(node));
@@ -53,9 +52,9 @@ export class DomScannerLoaded extends DomScanner
             // default : //Not support type
             //     break;
         }
-
+        
     }
-
+    
     protected processElement(element: Element)
     {
         // console.log("process element:", element);
@@ -64,13 +63,16 @@ export class DomScannerLoaded extends DomScanner
 
         // if(this.incompleteNodes.indexOf(element) < 0)
         this.processElementStart(element);
-
+        this.processChildNodes(element);
+        this.processElementEnd(element);
+    }
+    
+    protected processChildNodes(element: Element)
+    {
         element.childNodes.forEach((node: Node) =>
         {
             this.walkNode(node);
         });
-
-        this.processElementEnd(element);
     }
 
     protected processElementStart(element: Element)

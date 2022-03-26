@@ -5,11 +5,11 @@ export class DomScannerStream extends DomScanner
     private incompleteNodes: Node[];
     private scanPromise: Promise<void> = null;
     private scanResolve: () => void = null;
-
+    
     public constructor(doc: Document, options: DomScannerOptions)
     {
         super(doc, options);
-
+        
         this.incompleteNodes = [];
     }
 
@@ -17,44 +17,43 @@ export class DomScannerStream extends DomScanner
     {
         if (this.scanPromise)
             return this.scanPromise;
-
+        
         this.scanPromise = new Promise((resolve, reject) =>
         {
             this.scanResolve = resolve;
         });
-
+        
         this.walkNode(this.doc.documentElement);
-        this.observer.observe(this.doc.documentElement, { subtree: true, childList: true, attributes: true, characterData: true });
-
+        this.startObserve();
+        
         if (this.incompleteNodes.length > 0)
             setTimeout(this.scanIncompleteNodes.bind(this), 50);
     }
-
+    
     private scanIncompleteNodes()
     {
         const incompleteNodes = this.incompleteNodes;
-        console.log("scanIncompleteNodes:", incompleteNodes);
-
+        // console.log("scanIncompleteNodes:", incompleteNodes);
+        
         let lastCompletedNode: Node = null;
-
+        
         while (incompleteNodes.length > 0 && this.isCompletedNode(incompleteNodes[incompleteNodes.length - 1]))
             lastCompletedNode = this.incompleteNodes.pop();
-
+        
         if (lastCompletedNode)
             this.walkNode(lastCompletedNode);
-
+        
         if (this.incompleteNodes.length > 0)
         {
             setTimeout(this.scanIncompleteNodes.bind(this), 50);
         }
-
         else
         {
             // this.options.completed();
             this.scanResolve();
         }
     }
-
+    
     protected walkNode(node: Node)
     {
         // console.log("walk node:", node, this.isCompletedNode(node));
@@ -78,29 +77,33 @@ export class DomScannerStream extends DomScanner
             // default : //Not support type
             //     break;
         }
-
     }
-
+    
     protected processElement(element: Element)
     {
         // console.log("process element:", element);
         if (this.ignoreElementTags[element.tagName.toLowerCase()])
             return;
-
+        
         // if(this.incompleteNodes.indexOf(element) < 0)
         this.processElementStart(element);
-
+        
         const isCompleted = this.isCompletedNode(element);
         if (!isCompleted)
             this.incompleteNodes.push(element);
-
+        
+        this.processChildNodes(element);
+        
+        if (isCompleted)
+            this.processElementEnd(element);
+    }
+    
+    protected processChildNodes(element: Element)
+    {
         element.childNodes.forEach((node: Node) =>
         {
             this.walkNode(node);
         });
-
-        if (isCompleted)
-            this.processElementEnd(element);
     }
 
     protected processElementStart(element: Element)
@@ -121,7 +124,7 @@ export class DomScannerStream extends DomScanner
             this.incompleteNodes.push(node);
             return;
         }
-
+        
         this.options.comment(node);
     }
     protected processText(node: Text)
@@ -132,7 +135,7 @@ export class DomScannerStream extends DomScanner
             this.incompleteNodes.push(node);
             return;
         }
-
+        
         this.options.text(node);
     }
 
@@ -140,10 +143,10 @@ export class DomScannerStream extends DomScanner
     {
         if (this.doc.readyState == "complete")
             return true;
-
+        
         if (node.nextSibling)
             return true;
-
+        
         return node.parentNode ? this.isCompletedNode(node.parentNode) : false;
     }
 }

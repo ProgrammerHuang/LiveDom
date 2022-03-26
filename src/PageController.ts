@@ -3,7 +3,7 @@ import { DomScannerLoaded } from "./DomScannerLoaded";
 import { Parser } from "./Parser";
 import { PageOptions } from "./Page";
 import { DataManager, TypeData } from "./DataManager";
-import { AttrInfo, ElementRenderInfo, NodeElementInfo, NodeInfo, NodeTextInfo } from "./NodeInfo";
+import { AttrInfo, ElementRenderInfo, NodeElementInfo, NodeInfo, NodeTextInfo, RenderInfo } from "./NodeInfo";
 import { Directive, DirectiveConfig } from "./Directive";
 import { DirectiveElementRender } from "./DirectiveElementRender";
 import { DirectiveElementEach } from "./DirectiveElementEach";
@@ -11,7 +11,8 @@ import { DirectiveElementIf } from "./DirectiveElementIf";
 import { DirectiveElementElse } from "./DirectiveElementElse";
 import { DirectiveHtmlInputRender } from "./DirectiveHtmlInputRender";
 
-const propLiveInfo = Symbol("LiveDomInfoProp");
+const propNodeInfo = Symbol("LiveDomNodeInfoProp");
+const propRenderInfo = Symbol("LiveDomRenderInfoProp");
 const attrLiveName = "_ld";
 const attrLiveEach = "live:each";
 const attrLiveIf = "live:if";
@@ -41,7 +42,7 @@ export class PageController
             {attr: attrLiveIf, setup: DirectiveElementIf.setup, },
             {attr: attrLiveElse, setup: DirectiveElementElse.setup, },
             {attr: null, setup: DirectiveHtmlInputRender.setup, },
-            {attr: null, setup: DirectiveElementRender.setup, },
+            {attr: null, setup: DirectiveElementRender.setup, }, //must last one
         ];
         // this.directiveText = new DirectiveText();
         // this.nodeInfos = {};
@@ -51,7 +52,7 @@ export class PageController
             elementEnd: this.scanElementEnd.bind(this),
             comment: this.scanComment.bind(this),
             text: this.scanText.bind(this),
-            textChanged: this.onTextChanged.bind(this),
+            attrChanged: this.onAttrChanged.bind(this),
         });
         
         this.scanCompletedPromise = this.scanner.scan().
@@ -88,6 +89,9 @@ export class PageController
     private scanElementStart(element: Element) : void
     {
         // console.log("elementStart:", element);
+        if(this.isLiveNode(element))
+            return ;
+        
         this.setupElement(element);
     }
     private scanElementEnd(element: Element) : void
@@ -101,34 +105,73 @@ export class PageController
     private scanText(text: Text) : void
     {
         // console.log("text:", text);
-        this.setupText(text);
-    }
-    
-    private onTextChanged(text: Text) : void
-    {
-        // console.log("onTextChanged:", this.getNodeInfo(text), text);
-        const info = this.getNodeInfo(text);
-        if(info)
+        if(this.isLiveNode(text))
             return ;
         
         this.setupText(text);
     }
     
+    private onAttrChanged(element: Element, attrName: string)
+    {
+        const nodeInfo = this.getNodeInfo(element) as NodeElementInfo;
+        if(!nodeInfo)
+            return this.setupElement(element);
+        
+        const renderInfo = this.getRenderInfo(element) as ElementRenderInfo;
+        const newVal = element.getAttribute(attrName);
+        let attrInfo = nodeInfo.attrs[attrName];
+        
+        // console.log("onAttrChanged:", attrName, info?.attrs[attrName]?.srcVal, newVal, info?.attrs[attrName]?.srcVal==newVal);
+        // console.log("onAttrChanged:", attrName, info?.attrs[attrName]?.srcVal, newVal, info, element);
+        
+        if(!attrInfo) // not live attr
+        {
+            if(newVal && (attrInfo = this.createAttribute(newVal)))
+            {
+                nodeInfo.attrs[attrName] = attrInfo;
+                this.setupElementDirectives(element, nodeInfo);
+            }
+            return ;
+        }
+        
+        if(newVal == attrInfo.lastVal) //skip, change by render
+            return ;
+        
+        if(!newVal) // attr removed
+        {
+            delete nodeInfo.attrs[attrName];
+            this.setupElementDirectives(element, nodeInfo);
+            return ;
+        }
+        
+        if(attrInfo.srcVal != newVal) //attr really changed
+        {
+            attrInfo = this.updateAttribute(attrInfo, newVal);
+            if(!attrInfo)
+                delete nodeInfo.attrs[attrName];
+            
+            this.setupElementDirectives(element, nodeInfo);
+            return ;
+        }
+    }
+    
+    
     private setupElement(element: Element)
     {
         const info: NodeElementInfo = this.getNodeInfo(element) as NodeElementInfo || {
             id: 'LDE'+(nextId++),
-            element,
+            changed: true,
+            srcElement: element,
             placeholderComment: null,
             attrs: {},
             directives: [],
         };
         
         // console.log("DirectiveElement build node:", nodeInfo, node);
-        this.setElementAttributes(element, info);
+        this.setupElementAttributes(element, info);
         this.setupElementDirectives(element, info);
         
-        if(Object.keys(info.attrs).length == 0 && Object.keys(info.directives).length == 0)
+        if(Object.keys(info.attrs).length == 0 && info.directives.length == 0)
         {
             this.setNodeInfo(element, null);
             return ;
@@ -137,16 +180,16 @@ export class PageController
         info.render = this.renderElement.bind(this);
         this.setNodeInfo(element, info);
     }
-    private setElementAttributes(element: Element, info: NodeElementInfo)
+    private setupElementAttributes(element: Element, info: NodeElementInfo)
     {
         const attrs = element.attributes;
         for(let i=attrs.length-1; i>=0; --i)
         {
             const attr = attrs[i];
-            if(info.attrs[attr.name] && info.attrs[attr.name].srcVal == attr.value)
-                continue;
+            // if(info.attrs[attr.name] && info.attrs[attr.name].srcVal == attr.value)
+            //     continue;
             
-            const attrInfo = this.setupAttribute(attr);
+            const attrInfo = this.createAttribute(attr.value);
             // console.log("initElement attribute:", attr, attrInfo);
             if(attrInfo)
                 info.attrs[attr.name] = attrInfo;
@@ -154,73 +197,94 @@ export class PageController
                 delete info.attrs[attr.name];
         }
     }
-    private setupAttribute(attr: Attr) : AttrInfo
+    private createAttribute(attrVal: string) : AttrInfo
     {
-        const srcVal = attr.value;
-        const parseResult = Parser.parseText(srcVal);
+        const parseResult = Parser.parseText(attrVal);
         if(!Parser.hasTextExpress(parseResult))
             return null;
         
-        return {
-            srcVal,
+        const exec = parseResult.exec;
+        const info = {
+            srcVal: attrVal,
+            lastVal: attrVal,
             paths: parseResult.paths,
-            exec: parseResult.exec,
+            exec: function(data) { return info.lastVal = exec(data); },
             directive: null,
         };
+        
+        return info;
+    }
+    private updateAttribute(info: AttrInfo, attrVal)
+    {
+        const parseResult = Parser.parseText(attrVal);
+        if(!Parser.hasTextExpress(parseResult))
+            return null;
+        
+        const exec = parseResult.exec;
+        info.exec = function(data) { return info.lastVal = exec(data); };
+        info.srcVal = attrVal;
+        info.lastVal = attrVal;
+        
+        return info;
     }
     private setupElementDirectives(element: Element, info: NodeElementInfo)
     {
+        info.directives = [];
+        
         for(const config of this.elementDirectivesConfig)
         {
             config.setup(this, element, info, config);
         }
     }
-    private renderElement(placeholder: Element)
+    private renderElement(element: Element)
     {
-        const elementInfo = this.getNodeInfo(placeholder) as NodeElementInfo;
+        const nodeInfo = this.getNodeInfo(element) as NodeElementInfo;
         // console.log("renderElement:", placeholder, this.isLiveNode(placeholder), elementInfo);
-        if(! elementInfo)
+        if(! nodeInfo)
         {
-            this.renderChildNodes(placeholder);
+            this.renderChildNodes(element);
             return ;
         }
         
-        const exists: Node[] = [placeholder];
-        let nextNode = placeholder.nextSibling;
+        const exists: Node[] = [element];
+        let nextNode = element.nextSibling;
         while(nextNode)
         {
             const nextInfo = this.getNodeInfo(nextNode);
-            if(nextInfo != elementInfo)
+            if(nextInfo != nodeInfo)
                 break;
             
             exists.push(nextNode);
             nextNode = nextNode.nextSibling;
         }
+        // console.log("renderElement exists:", placeholder, exists, exists.map(n => n.parentNode));
         
         const renderInfo: ElementRenderInfo = {
-            elementInfo,
+            lastAttrsVal: {},
+            ...this.getRenderInfo(element) as ElementRenderInfo,
+            nodeInfo: nodeInfo,
             exists,
-            // attrsVal: {}, //TODO no use
         };
         
-        const element = placeholder.nodeType==1 ? placeholder as Element : elementInfo.element;
-        const renderElements = this.processElementDirectiveRender(element, renderInfo, 0);
-        // console.log("renderElement renderElements:", element, renderElements, renderInfo);
+        const srcElement = element.nodeType==1 ? element : nodeInfo.srcElement;
+        const renderElements = this.processElementDirectiveRender(srcElement, renderInfo, 0);
+        // console.log("renderElement renderElements:", placeholder, placeholder.parentNode, element, renderElements, renderInfo);
         if(renderElements.length == 0)
         {
             // console.log("renderElement renderElements remove:", exists.length, element.parentNode, element);
-            const placeholderComment = this.getPlaceholderComment(elementInfo);
-            insertAfter(placeholder, placeholderComment);
+            const placeholderComment = this.getPlaceholderComment(nodeInfo);
+            insertAfter(element, placeholderComment);
+            // console.log("renderElement placeholderComment:", placeholder, placeholder.parentNode, placeholderComment, exists);
             for(const ele of exists)
             {
-                // console.log(">>>>>>>>>>>>>>>>>>>>>>>>", ele.parentNode, ele);
+                // console.log(">>>>>>>>>>>>>>>>>>>>>>>> removeNode:", placeholder, ele != placeholderComment, ele.parentNode, ele);
                 if(ele != placeholderComment)
                     removeNode(ele);
             }
         }
         else
         {
-            let prev = placeholder;
+            let prev = element;
             for(const ele of renderElements)
             {
                 insertAfter(prev, ele);
@@ -236,17 +300,18 @@ export class PageController
     }
     private processElementDirectiveRender(element: Element, renderInfo: ElementRenderInfo, directiveIndex: number) : Element[]
     {
-        const directives = renderInfo.elementInfo.directives;
+        const directives = renderInfo.nodeInfo.directives;
         
         if(directiveIndex < directives.length)
         {
             return directives[directiveIndex].render(
                 element,
                 renderInfo, 
-                (ele: Element, info: ElementRenderInfo) => this.processElementDirectiveRender(ele, info, directiveIndex+1)
+                (ele: Element, ri: ElementRenderInfo) => this.processElementDirectiveRender(ele, ri, directiveIndex+1)
             );
         }
         
+        this.setRenderInfo(element, renderInfo);
         return [element];
     }
     public isPlaceholder(node: Node) : boolean
@@ -254,19 +319,23 @@ export class PageController
         if(node.nodeType != 8) //8: Node.COMMENT_NODE
             return false;
         
-        const info = this.getNodeInfo(node) as NodeElementInfo;
-        return !!info && info.placeholderComment == node;
+        const info = this.getRenderInfo(node) as PlaceholderRenderInfo;
+        return !!info && !!info.isPlaceholder;
     }
     private getPlaceholderComment(info: NodeElementInfo) : Comment
     {
         if(info.placeholderComment)
             return info.placeholderComment;
         
-        info.placeholderComment = this.doc.createComment("_LiveDomId="+info.id);
-        this.setNodeInfo(info.placeholderComment, info);
-        return info.placeholderComment;
+        const placeholderComment = this.doc.createComment("_LiveDomId="+info.id);
+        const renderInfo: PlaceholderRenderInfo = {nodeInfo: info, isPlaceholder: true};
+        //TODO placeholderComment.renderInfo = {isPlaceholder}
+        // info.placeholderComment = placeholderComment;
+        this.setNodeInfo(placeholderComment, info);
+        this.setRenderInfo(placeholderComment, renderInfo);
+        return placeholderComment;
     }
-    public renderChildNodes(parentNode: Node)
+    public renderChildNodes(parentNode: Node) //TODO move to DirectiveElementChildNodes
     {
         const t = nextId ++;
         const nodes = [];
@@ -289,6 +358,7 @@ export class PageController
                 continue;
             
             info.render(node);
+            info.changed = false;
             info._t = t;
         }
     }
@@ -302,6 +372,7 @@ export class PageController
         
         const info: NodeTextInfo = {
             id: 'LDT'+(nextId++),
+            changed: true,
         };
         const textExec = parseResult.exec;
         
@@ -324,7 +395,7 @@ export class PageController
     {
         for(let i=0, l=srcNodes.length; i < l; ++i)
         {
-            desNodes[i][propLiveInfo] = srcNodes[i][propLiveInfo];
+            desNodes[i][propNodeInfo] = srcNodes[i][propNodeInfo];
             
             if(srcNodes[i].nodeType == 1) // 1: Node.ELEMENT_NODE
                 this.cloneNodesInfo(srcNodes[i].childNodes, desNodes[i].childNodes);
@@ -335,22 +406,42 @@ export class PageController
     {
         //weak map ?
         //prop map ?
-        node[propLiveInfo] = info;
+        node[propNodeInfo] = info;
     }
     public getNodeInfo(node: Node) : NodeInfo
     {
-        return node[propLiveInfo] || null;
+        return node[propNodeInfo] || null;
     }
     private hasNodeInfo(node: Node) : boolean
     {
-        return !!node[propLiveInfo];
+        return !!node[propNodeInfo];
     }
+    
+    private setRenderInfo(node: Node, info: RenderInfo)
+    {
+        //weak map ?
+        //prop map ?
+        node[propRenderInfo] = info;
+    }
+    public getRenderInfo(node: Node) : RenderInfo
+    {
+        return node[propRenderInfo] || null;
+    }
+    private hasRenderInfo(node: Node) : boolean
+    {
+        return !!node[propRenderInfo];
+    }
+    
     private isLiveNode(node: Node) : boolean
     {
-        return propLiveInfo in node;
+        return propNodeInfo in node; //TODO use renderInfo
     }
 }
 
+interface PlaceholderRenderInfo extends RenderInfo
+{
+    isPlaceholder: boolean;
+}
 
 function removeNode(node: Node)
 {

@@ -43,10 +43,9 @@ export class DirectiveHtmlInputRender extends Directive
         this.attrs = attrs;
     }
 
-    public render(element: HTMLInputElement, info: ElementRenderInfo, continueRender: DirectiveRender<Element>)
+    public render(element: HTMLInputElement, info: HtmlInputRenderInfo, continueRender: DirectiveRender<Element>)
     {
         // console.log("DirectiveElementEach renderNode:", element, info);
-        const elementInfo = info.elementInfo;
         
         if(this.attrs.value && this.controller.dataManager.hasUseLastMergeData(this.attrs.value.paths))
         {
@@ -67,4 +66,9 @@ export class DirectiveHtmlInputRender extends Directive
         // console.log("DirectiveElementEach items:", items);
         return continueRender(element, info);
     }
+}
+
+interface HtmlInputRenderInfo extends ElementRenderInfo
+{
+    
 }

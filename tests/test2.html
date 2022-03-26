@@ -8,6 +8,12 @@
     body.light h1.title {
         color: goldenrod;
     }
+    body.dark h1.title {
+        color: darkblue;
+    }
+    button.theme-switch::after {
+        content: attr(data-to);
+    }
     .comment-reply {
         margin-left: 24px;
     }
@@ -15,15 +21,17 @@
     <script src="../dist/livedom.js" type="text/javascript"></script>
     <script type="text/javascript">
     
+    let themes = ["light", "dark"];
+    let themeIndex = 0;
     const initData = {
         name: "World",
         content: "Hi, very good!",
         article: {author: "Me"},
         likes: 123,
         livesColor: "red",
-        themeClass: "light",
+        themeClass: themes[themeIndex],
         comments: [
-            {content: "Comment 1"},
+            {content: "Comment 1", replies: []},
             {content: "Comment 2", replies: [{content: "Reply Content 2.1"}, {content: "Reply Content 2.2"}]},
             {content: "Comment 3"},
         ],
@@ -36,12 +44,40 @@
         console.log(">>>>>>>>>>>>>>>>>>>>>>: ", Date.now() - startTime);
         // const data = {name: "World", content: "Hi, very good!", article: {author: "Me"}};
         // page.updateData(data);
+        
+        document.getElementById("TestThemeSwitch").addEventListener("click", function(event)
+        {
+            themeIndex = (themeIndex + 1) % 2;
+            const val = "${themeClass} > " + themes[(themeIndex + 1) % 2];
+            document.getElementById("TestThemeSwitch").setAttribute("data-to", val);
+            page.updateData({themeClass: themes[themeIndex]});
+        });
+        document.getElementById("TestInnerHtmlButton").addEventListener("click", function(event)
+        {
+            // page.updateData({nowStr: (new Date()).toLocaleTimeString()});
+            document.getElementById("TestInnerContainer").innerHTML = '<span><b>nowStr: </b>${nowStr}</span>';
+            setTimeout(function()
+            {
+                page.updateData({nowStr: (new Date()).toLocaleTimeString()});
+            }, 1000);
+        });
+        document.getElementById("TestInnerTextButton").addEventListener("click", function(event)
+        {
+            document.getElementById("TestInnerContainer").innerText = 'text: ${nowStr} .';
+            setTimeout(function()
+            {
+                page.updateData({nowStr: (new Date()).toLocaleTimeString()});
+            }, 1000);
+        });
+        
     }});
+    
     </script>
 </head>
 <body class="page-container live-loading ${themeClass}">
 
 <h1 class="title">Hello ${name} <!-- title end --><script type="text/javascript">console.log("-------------------------", new Date());</script></h1>
+<button id="TestThemeSwitch" class="theme-switch">switch: </button>
 <p class="content">${ content } Author: ${ article.author }, ${article.date}. <span style="color: ${livesColor}">${likes}</span> ${what.nothing}:)</p>
 <hr />
 <div class="comments-list">
@@ -50,8 +86,15 @@
         <div class="comment-reply" live:each="${item.replies}">
             ${item.content}
         </div>
+        <div class="comment-reply" live:else>No reply, ${item.replies.length}</div>
     </div>
 </div>
+
+<hr>
+<button id="TestInnerHtmlButton">test inner html</button>
+<button id="TestInnerTextButton">test inner text</button>
+<div id="TestInnerContainer"></div>
+
 
 <!-- comment hi -->
 

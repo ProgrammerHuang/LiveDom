@@ -7,6 +7,7 @@ type RendererFunction<R=any> = (node: Node) => R;
 export interface NodeInfo<N extends Node = Node>
 {
     id: string;
+    changed: boolean;
     render?: RendererFunction;
     // directive: Directive;
     // liveNodes?: N[];
@@ -15,7 +16,7 @@ export interface NodeInfo<N extends Node = Node>
 
 export interface NodeElementInfo extends NodeInfo
 {
-    element: Element;
+    srcElement: Element;
     placeholderComment: Comment;
     attrs: MapObject<AttrInfo>;
     directives: Directive<Element>[];
@@ -24,22 +25,15 @@ export interface NodeElementInfo extends NodeInfo
 export interface AttrInfo
 {
     srcVal: string;
-    // prevVal: any;
+    lastVal: any; //TODO 数据错乱, 当是一个复制的节点的话
     paths: DataPaths;
     exec(data: TypeData);
     directive: Directive;
 }
-export interface ElementRenderInfo
-{
-    elementInfo: NodeElementInfo;
-    exists: Node[];
-    // attrsVal: MapObject<any>;
-    // disableRenderChildNodes: boolean;
-}
 
 export interface NodeTextInfo extends NodeInfo
 {
-    // raw: string;
+    // src: string;
 }
 
 // interface NodeLiveData<N extends Node = Node>
@@ -47,4 +41,18 @@ export interface NodeTextInfo extends NodeInfo
 //     origin: NodeInfo;
 //     node: N;
 // }
+
+export interface RenderInfo<NI extends NodeInfo = NodeInfo>
+{
+    nodeInfo: NI;
+    // keyData: TypeData;
+    // lastData: TypeData;
+}
+
+export interface ElementRenderInfo extends RenderInfo<NodeElementInfo>
+{
+    exists: Node[];
+    lastAttrsVal: MapObject<any>;
+    // disableRenderChildNodes: boolean;
+}
 

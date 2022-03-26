@@ -47,7 +47,7 @@ export class DirectiveElementEach extends Directive
     public render(element: Element, info: ElementRenderInfo, continueRender: DirectiveRender<Element>)
     {
         // console.log("DirectiveElementEach renderNode:", element, info);
-        const elementInfo = info.elementInfo;
+        const nodeInfo = info.nodeInfo;
         // const directiveAttrInfo = elementInfo.directiveAttrs[attrLiveEach];
         const items = this.attrInfo.exec(this.controller.dataManager.data);
         // console.log("DirectiveElementEach items:", items);
@@ -65,19 +65,36 @@ export class DirectiveElementEach extends Directive
             
             // console.log("processElementEach itemElement from exists: ", info.exists.find((ele: Element) => ele[propLiveKeyData]==keyVal && renderElements.indexOf(ele)<0));
             // const itemElement = this.controller.cloneNode(elementInfo.element);
-            const itemElement = info.exists.find((ele: Element) => propLiveKeyData in ele && ele[propLiveKeyData] == keyVal && renderElements.indexOf(ele) < 0) as Element ||
-                                this.controller.cloneNode(elementInfo.element);
+            let itemElement: Element = null;
+            for(const ele of info.exists as Element[])
+            {
+                if(propLiveKeyData in ele && ele[propLiveKeyData] == keyVal && renderElements.indexOf(ele) < 0)
+                {
+                    // console.log("each propLiveKeyData:", keyVal, ele);
+                    itemElement = ele;
+                    break;
+                }
+            }
+            if(!itemElement)
+                itemElement = this.controller.cloneNode(nodeInfo.srcElement);
+            
+            const renderInfo: ElementRenderInfo = {
+                ...info,
+                ...this.controller.getRenderInfo(itemElement) as ElementRenderInfo,
+            };
+            
             itemElement[propLiveKeyData] = keyVal;
             
             const scopeData = { [this.itemName]: item, [this.indexName]: i };
             this.controller.dataManager.pushScopeData(scopeData);
-            const itemRenderElements = continueRender(itemElement, info);
+            const itemRenderElements = continueRender(itemElement, renderInfo);
             this.controller.dataManager.popScopeData(scopeData);
+            // console.log("itemElement html:", item, itemElement.innerHTML);
             
             if (itemRenderElements.length > 0)
                 renderElements.push(itemRenderElements[0]);
         }
-
+        
         return renderElements;
     }
 }
