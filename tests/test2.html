@@ -35,6 +35,7 @@
             {content: "Comment 2", replies: [{content: "Reply Content 2.1"}, {content: "Reply Content 2.2"}]},
             {content: "Comment 3"},
         ],
+        htmlContent: "Html <i>Content</i>, no render <b>${name}</b>",
     };
     
     const startTime = Date.now();
@@ -52,7 +53,7 @@
             document.getElementById("TestThemeSwitch").setAttribute("data-to", val);
             page.updateData({themeClass: themes[themeIndex]});
         });
-        document.getElementById("TestInnerHtmlButton").addEventListener("click", function(event)
+        document.getElementById("RenderInnerHtmlButton").addEventListener("click", function(event)
         {
             // page.updateData({nowStr: (new Date()).toLocaleTimeString()});
             document.getElementById("TestInnerContainer").innerHTML = '<span><b>nowStr: </b>${nowStr}</span>';
@@ -61,7 +62,7 @@
                 page.updateData({nowStr: (new Date()).toLocaleTimeString()});
             }, 1000);
         });
-        document.getElementById("TestInnerTextButton").addEventListener("click", function(event)
+        document.getElementById("RenderInnerTextButton").addEventListener("click", function(event)
         {
             document.getElementById("TestInnerContainer").innerText = 'text: ${nowStr} .';
             setTimeout(function()
@@ -89,10 +90,11 @@
         <div class="comment-reply" live:else>No reply, ${item.replies.length}</div>
     </div>
 </div>
+<!-- comment hi -->
 
 <hr>
-<button id="TestInnerHtmlButton">test inner html</button>
-<button id="TestInnerTextButton">test inner text</button>
+<button id="RenderInnerHtmlButton">render inner html</button>
+<button id="RenderInnerTextButton">render inner text</button>
 <div id="TestInnerContainer"></div>
 
 <hr>
@@ -100,7 +102,10 @@
     <div>Hello ${name}</div>
 </div>
 
-<!-- comment hi -->
+<hr>
+<!-- <button id="TestLiveHtmlButton">set live:html</button> --><span id="TestLiveHtmlSpan" live:html="${htmlContent}">init ${name}</span><br>
+<!-- <button id="TestLiveTextButton">set live:text</button> --><span id="TestLiveTextSpan" live:text="${htmlContent}">init ${name}</span><br>
+
 
 </body>
 </html>

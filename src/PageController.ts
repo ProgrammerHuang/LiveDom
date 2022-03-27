@@ -11,6 +11,8 @@ import { DirectiveElementIf } from "./DirectiveElementIf";
 import { DirectiveElementElse } from "./DirectiveElementElse";
 import { DirectiveHtmlInputRender } from "./DirectiveHtmlInputRender";
 import { DirectiveDisableChildNodes } from "./DirectiveDisableChildNodes";
+import { DirectiveElementInnerHtml } from "./DirectiveElementInnerHtml";
+import { DirectiveElementInnerText } from "./DirectiveElementInnerText";
 
 const propNodeInfo = Symbol("LiveDomNodeInfoProp");
 const propRenderInfo = Symbol("LiveDomRenderInfoProp");
@@ -43,6 +45,8 @@ export class PageController
             {attr: "live:if", setup: DirectiveElementIf.setup, },
             {attr: "live:else", setup: DirectiveElementElse.setup, },
             {attr: null, setup: DirectiveHtmlInputRender.setup, },
+            {attr: "live:html", setup: DirectiveElementInnerHtml.setup, },
+            {attr: "live:text", setup: DirectiveElementInnerText.setup, },
             {attr: "live:disable-children", setup: DirectiveDisableChildNodes.setup, },
             {attr: null, setup: DirectiveElementRender.setup, }, //must last one
         ];
