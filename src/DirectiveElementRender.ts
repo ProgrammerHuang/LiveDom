@@ -36,7 +36,9 @@ export class DirectiveElementRender extends Directive // rename to DirectiveElem
             info.lastAttrsVal[attrName] = attrVal;
         }
         
-        this.controller.renderChildNodes(element);
+        // console.log(">>>>>>>>", element, nodeInfo.disableChildNodes);
+        if(! nodeInfo.disableChildNodes)
+            this.controller.renderChildNodes(element);
         
         return continueRender(element, info);
     }

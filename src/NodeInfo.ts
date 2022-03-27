@@ -17,15 +17,16 @@ export interface NodeInfo<N extends Node = Node>
 export interface NodeElementInfo extends NodeInfo
 {
     srcElement: Element;
-    placeholderComment: Comment;
+    // placeholderComment: Comment;
     attrs: MapObject<AttrInfo>;
     directives: Directive<Element>[];
     // keyGetter?: (data: TypeData) => any;
+    disableChildNodes: boolean;
 }
 export interface AttrInfo
 {
     srcVal: string;
-    lastVal: any; //TODO 数据错乱, 当是一个复制的节点的话
+    // lastVal: any; //TODO 数据错乱, 当是一个复制的节点的话
     paths: DataPaths;
     exec(data: TypeData);
     directive: Directive;

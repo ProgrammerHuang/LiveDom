@@ -10,13 +10,14 @@ import { DirectiveElementEach } from "./DirectiveElementEach";
 import { DirectiveElementIf } from "./DirectiveElementIf";
 import { DirectiveElementElse } from "./DirectiveElementElse";
 import { DirectiveHtmlInputRender } from "./DirectiveHtmlInputRender";
+import { DirectiveDisableChildNodes } from "./DirectiveDisableChildNodes";
 
 const propNodeInfo = Symbol("LiveDomNodeInfoProp");
 const propRenderInfo = Symbol("LiveDomRenderInfoProp");
-const attrLiveName = "_ld";
-const attrLiveEach = "live:each";
-const attrLiveIf = "live:if";
-const attrLiveElse = "live:else";
+// const attrLiveName = "_ld";
+// const attrLiveEach = "live:each";
+// const attrLiveIf = "live:if";
+// const attrLiveElse = "live:else";
 let nextId = 1001;
 
 export class PageController
@@ -38,10 +39,11 @@ export class PageController
         this.options = options;
         this.dataManager = new DataManager(this.options.data || {});
         this.elementDirectivesConfig = [
-            {attr: attrLiveEach, setup: DirectiveElementEach.setup, },
-            {attr: attrLiveIf, setup: DirectiveElementIf.setup, },
-            {attr: attrLiveElse, setup: DirectiveElementElse.setup, },
+            {attr: "live:each", setup: DirectiveElementEach.setup, },
+            {attr: "live:if", setup: DirectiveElementIf.setup, },
+            {attr: "live:else", setup: DirectiveElementElse.setup, },
             {attr: null, setup: DirectiveHtmlInputRender.setup, },
+            {attr: "live:disable-children", setup: DirectiveDisableChildNodes.setup, },
             {attr: null, setup: DirectiveElementRender.setup, }, //must last one
         ];
         // this.directiveText = new DirectiveText();
@@ -134,7 +136,7 @@ export class PageController
             return ;
         }
         
-        if(newVal == attrInfo.lastVal) //skip, change by render
+        if(newVal == renderInfo.lastAttrsVal[attrName]) //skip, change by render
             return ;
         
         if(!newVal) // attr removed
@@ -162,9 +164,10 @@ export class PageController
             id: 'LDE'+(nextId++),
             changed: true,
             srcElement: element,
-            placeholderComment: null,
+            // placeholderComment: null,
             attrs: {},
             directives: [],
+            disableChildNodes: false,
         };
         
         // console.log("DirectiveElement build node:", nodeInfo, node);
@@ -221,9 +224,8 @@ export class PageController
             return null;
         
         const exec = parseResult.exec;
-        info.exec = function(data) { return info.lastVal = exec(data); };
+        info.exec = exec;
         info.srcVal = attrVal;
-        info.lastVal = attrVal;
         
         return info;
     }
@@ -324,8 +326,8 @@ export class PageController
     }
     private getPlaceholderComment(info: NodeElementInfo) : Comment
     {
-        if(info.placeholderComment)
-            return info.placeholderComment;
+        // if(info.placeholderComment)
+        //     return info.placeholderComment;
         
         const placeholderComment = this.doc.createComment("_LiveDomId="+info.id);
         const renderInfo: PlaceholderRenderInfo = {nodeInfo: info, isPlaceholder: true};
