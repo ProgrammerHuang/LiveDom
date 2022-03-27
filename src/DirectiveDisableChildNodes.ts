@@ -2,6 +2,9 @@ import { Directive, DirectiveConfig, DirectiveRender } from "./Directive";
 import { NodeElementInfo, AttrInfo, ElementRenderInfo } from "./NodeInfo";
 import { PageController } from "./PageController";
 
+//TODO 优化不进内部进行setup, 但如果值是动态的话, 可能会引起错误或复杂性
+//TODO 如果只对内部渲染时, 可能会忽略了这个设置, 可以在开始渲染标签时先检查这个标签是否在禁止标签里
+
 export class DirectiveDisableChildNodes extends Directive
 {
     public static setup(controller: PageController, element: Element, info: NodeElementInfo, config: DirectiveConfig)
@@ -19,13 +22,13 @@ export class DirectiveDisableChildNodes extends Directive
     }
     
     // private element: Element;
-    private attrInfo: AttrInfo;
+    // private attrInfo: AttrInfo;
     
     protected constructor(controller: PageController, element: Element, attrInfo: AttrInfo)
     {
         super(controller);
         // this.element = element;
-        this.attrInfo = attrInfo;
+        // this.attrInfo = attrInfo;
     }
     
     public render(element: Element, info: ElementRenderInfo, continueRender: DirectiveRender<Element>)
@@ -36,6 +39,6 @@ export class DirectiveDisableChildNodes extends Directive
         // const val = this.attrInfo.exec(this.controller.dataManager.data);
         // console.log("DirectiveElementEach items:", items);
         
-        return [element];
+        return continueRender(element, info);
     }
 }
