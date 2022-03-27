@@ -17,10 +17,6 @@ export function createPage(controller: PageController) : Page
     const page = new Page();
     
     page.updateData = controller.updatePageData.bind(controller);
-    // page.onReady = function(cb)
-    // {
-    //     controller.scanCompletedPromise.then(cb);
-    // }
     
     return page;
 }
