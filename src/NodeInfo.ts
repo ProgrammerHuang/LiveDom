@@ -7,7 +7,6 @@ type RendererFunction<R=any> = (node: Node) => R;
 export interface NodeInfo<N extends Node = Node>
 {
     id: string;
-    changed: boolean;
     render?: RendererFunction;
     // directive: Directive;
     // liveNodes?: N[];
@@ -17,7 +16,6 @@ export interface NodeInfo<N extends Node = Node>
 export interface NodeElementInfo extends NodeInfo
 {
     srcElement: Element;
-    // placeholderComment: Comment;
     attrs: MapObject<AttrInfo>;
     directives: Directive<Element>[];
     // keyGetter?: (data: TypeData) => any;

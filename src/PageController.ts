@@ -157,12 +157,10 @@ export class PageController
         }
     }
     
-    
     private setupElement(element: Element)
     {
         const info: NodeElementInfo = this.getNodeInfo(element) as NodeElementInfo || {
             id: 'LDE'+(nextId++),
-            changed: true,
             srcElement: element,
             // placeholderComment: null,
             attrs: {},
@@ -326,13 +324,8 @@ export class PageController
     }
     private getPlaceholderComment(info: NodeElementInfo) : Comment
     {
-        // if(info.placeholderComment)
-        //     return info.placeholderComment;
-        
         const placeholderComment = this.doc.createComment("_LiveDomId="+info.id);
         const renderInfo: PlaceholderRenderInfo = {nodeInfo: info, isPlaceholder: true};
-        //TODO placeholderComment.renderInfo = {isPlaceholder}
-        // info.placeholderComment = placeholderComment;
         this.setNodeInfo(placeholderComment, info);
         this.setRenderInfo(placeholderComment, renderInfo);
         return placeholderComment;
@@ -360,7 +353,6 @@ export class PageController
                 continue;
             
             info.render(node);
-            info.changed = false;
             info._t = t;
         }
     }
@@ -374,7 +366,6 @@ export class PageController
         
         const info: NodeTextInfo = {
             id: 'LDT'+(nextId++),
-            changed: true,
         };
         const textExec = parseResult.exec;
         
