@@ -1,7 +1,5 @@
 import { DataPaths, TypeData } from "./DataManager";
 
-//TODO isUseMergeData() field1!==undefined || field1.field2!==undefined || ...
-
 export type TextFunction<R=any> = (data: TypeData) => R;
 
 interface ParseTextResult
