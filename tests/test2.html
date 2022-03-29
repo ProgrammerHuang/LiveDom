@@ -73,6 +73,17 @@
         
     }});
     
+    class TestComponent1 extends HTMLElement
+    {
+        constructor()
+        {
+            super();
+            // const shadowRoot = this.attachShadow({mode: "open"});
+        }
+    }
+    
+    window.customElements.define("test-component1", TestComponent1);
+    
     </script>
 </head>
 <body class="page-container live-loading ${themeClass}">
@@ -106,6 +117,19 @@
 <!-- <button id="TestLiveHtmlButton">set live:html</button> --><span id="TestLiveHtmlSpan" live:html="${htmlContent}">init ${name}</span><br>
 <!-- <button id="TestLiveTextButton">set live:text</button> --><span id="TestLiveTextSpan" live:text="${htmlContent}">init ${name}</span><br>
 
+<hr>
+<template id="SayHelloTemplate">
+    <span>
+        <slot name="say">Yes!</slot>, 
+        <slot name="content">What!</slot>
+    </span>
+</template>
+<div live:template="SayHelloTemplate"><b slot="say">Hi</b>, <span slot="content">The ${content}</span></div>
+
+<hr>
+<test-component1>
+    <div>Hello ${name}</div>
+</test-component1>
 
 </body>
 </html>

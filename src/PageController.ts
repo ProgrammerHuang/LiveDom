@@ -13,6 +13,7 @@ import { DirectiveHtmlInputRender } from "./DirectiveHtmlInputRender";
 import { DirectiveDisableChildNodes } from "./DirectiveDisableChildNodes";
 import { DirectiveElementInnerHtml } from "./DirectiveElementInnerHtml";
 import { DirectiveElementInnerText } from "./DirectiveElementInnerText";
+import { DirectiveHtmlTemplate } from "./DirectiveHtmlTemplate";
 
 const propNodeInfo = Symbol("LiveDomNodeInfoProp");
 const propRenderInfo = Symbol("LiveDomRenderInfoProp");
@@ -47,6 +48,7 @@ export class PageController
             {attr: null, setup: DirectiveHtmlInputRender.setup, },
             {attr: "live:html", setup: DirectiveElementInnerHtml.setup, },
             {attr: "live:text", setup: DirectiveElementInnerText.setup, },
+            {attr: "live:template", setup: DirectiveHtmlTemplate.setup, },
             {attr: "live:disable-children", setup: DirectiveDisableChildNodes.setup, },
             {attr: null, setup: DirectiveElementRender.setup, }, //must last one
         ];
@@ -127,9 +129,6 @@ export class PageController
         const newVal = element.getAttribute(attrName);
         let attrInfo = nodeInfo.attrs[attrName];
         
-        // console.log("onAttrChanged:", attrName, info?.attrs[attrName]?.srcVal, newVal, info?.attrs[attrName]?.srcVal==newVal);
-        // console.log("onAttrChanged:", attrName, info?.attrs[attrName]?.srcVal, newVal, info, element);
-        
         if(!attrInfo) // not live attr
         {
             if(newVal && (attrInfo = this.createAttribute(newVal)))
@@ -172,9 +171,9 @@ export class PageController
             disableChildNodes: false,
         };
         
-        // console.log("DirectiveElement build node:", nodeInfo, node);
         this.setupElementAttributes(element, info);
         this.setupElementDirectives(element, info);
+        // element.setAttribute("ld-track-id", info.id);
         
         if(Object.keys(info.attrs).length == 0 && info.directives.length == 0)
         {
