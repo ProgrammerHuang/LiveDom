@@ -5,15 +5,6 @@ import { PageOptions } from "./Page";
 import { DataManager, TypeData } from "./DataManager";
 import { AttrInfo, ElementRenderInfo, NodeElementInfo, NodeInfo, NodeTextInfo, RenderInfo } from "./NodeInfo";
 import { Directive, DirectiveConfig } from "./Directive";
-import { DirectiveElementRender } from "./DirectiveElementRender";
-import { DirectiveElementEach } from "./DirectiveElementEach";
-import { DirectiveElementIf } from "./DirectiveElementIf";
-import { DirectiveElementElse } from "./DirectiveElementElse";
-import { DirectiveHtmlInputRender } from "./DirectiveHtmlInputRender";
-import { DirectiveDisableChildNodes } from "./DirectiveDisableChildNodes";
-import { DirectiveElementInnerHtml } from "./DirectiveElementInnerHtml";
-import { DirectiveElementInnerText } from "./DirectiveElementInnerText";
-import { DirectiveHtmlTemplate } from "./DirectiveHtmlTemplate";
 
 const propNodeInfo = Symbol("LiveDomNodeInfoProp");
 const propRenderInfo = Symbol("LiveDomRenderInfoProp");
@@ -22,6 +13,11 @@ const propRenderInfo = Symbol("LiveDomRenderInfoProp");
 // const attrLiveIf = "live:if";
 // const attrLiveElse = "live:else";
 let nextId = 1001;
+
+interface PageControllerOptions extends PageOptions
+{
+    elementDirectivesConfig: DirectiveConfig<Element>[];
+}
 
 export class PageController
 {
@@ -36,22 +32,12 @@ export class PageController
     // private nodeInfos: MapObject<NodeInfo>;
     private requestRenderPagePromise: Promise<void> = null;
     
-    public constructor(doc: Document, options: PageOptions)
+    public constructor(doc: Document, options: PageControllerOptions)
     {
         this.doc = doc;
         this.options = options;
         this.dataManager = new DataManager(this.options.data || {});
-        this.elementDirectivesConfig = [
-            {attr: "live:each", setup: DirectiveElementEach.setup, },
-            {attr: "live:if", setup: DirectiveElementIf.setup, },
-            {attr: "live:else", setup: DirectiveElementElse.setup, },
-            {attr: null, setup: DirectiveHtmlInputRender.setup, },
-            {attr: "live:html", setup: DirectiveElementInnerHtml.setup, },
-            {attr: "live:text", setup: DirectiveElementInnerText.setup, },
-            {attr: "live:template", setup: DirectiveHtmlTemplate.setup, },
-            {attr: "live:disable-children", setup: DirectiveDisableChildNodes.setup, },
-            {attr: null, setup: DirectiveElementRender.setup, }, //must last one
-        ];
+        this.elementDirectivesConfig = options.elementDirectivesConfig;
         // this.directiveText = new DirectiveText();
         // this.nodeInfos = {};
         
