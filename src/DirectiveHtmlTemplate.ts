@@ -41,8 +41,9 @@ export class DirectiveHtmlTemplate extends Directive
         const templateId = this.attrInfo ? this.attrInfo.exec(this.controller.dataManager.data) : this.attrVal;
         const template = (element.ownerDocument.getElementById(templateId) as HTMLTemplateElement).content;
         
-        const shadow = element.attachShadow({mode: "open"});
-        shadow.appendChild(template.cloneNode(true).cloneNode(true)); //TODO controller.clone
+        const shadow = element.shadowRoot || element.attachShadow({mode: "open"});
+        shadow.innerHTML = "";
+        shadow.appendChild(template.cloneNode(true)); //TODO controller.cloneNode()
         
         return continueRender(element, info);
     }
